@@ -29,7 +29,5 @@ public class AddNewContractRequest {
     @NotBlank
     private String model;
     @NotBlank
-    private String clientId;
-    @NotBlank
     private String contractId;
 }

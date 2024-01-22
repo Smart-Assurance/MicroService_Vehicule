@@ -5,11 +5,11 @@ import ma.fstt.microservicevehicule.entities.Contract;
 import ma.fstt.microservicevehicule.entities.Vehicule;
 import ma.fstt.microservicevehicule.payload.request.AddNewContractRequest;
 import ma.fstt.microservicevehicule.payload.response.MessageResponse;
-import ma.fstt.microservicevehicule.payload.response.VehiculeWithClientAndContract;
 import ma.fstt.microservicevehicule.repository.ClientRepository;
 import ma.fstt.microservicevehicule.repository.ContractRepository;
 import ma.fstt.microservicevehicule.repository.VehiculeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,14 +27,35 @@ public class VehiculeController {
     public VehiculeRepository vehiculeRepository;
     @Autowired
     public ClientRepository clientRepository;
+    private final AuthService authService;
+
+    public VehiculeController(ContractRepository contractRepository, VehiculeRepository vehiculeRepository, ClientRepository clientRepository,AuthService authService) {
+        this.contractRepository = contractRepository;
+        this.clientRepository = clientRepository;
+        this.vehiculeRepository = vehiculeRepository;
+        this.authService = authService;
+    }
+
+    private String extractTokenFromHeader(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        }
+        return null;
+    }
 
 
     @PostMapping("/contract")
-    public ResponseEntity<MessageResponse> addContractForVehicule(@RequestBody AddNewContractRequest addNewContractRequest) {
+    public ResponseEntity<MessageResponse> addContractForVehicule(@RequestBody AddNewContractRequest addNewContractRequest,@RequestHeader("Authorization") String authorizationHeader) {
         try {
 
             Contract targetContract;
             Client targetClient;
+
+            // Extract the token from the Authorization header
+            String token = extractTokenFromHeader(authorizationHeader);
+            if (!authService.isValidClientToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(401, "Not authorized"));
+            }
 
 
             //test if vehicule not exist with matricule
@@ -42,8 +63,10 @@ public class VehiculeController {
             if (canExistVehicule.isPresent())
                 return ResponseEntity.badRequest().body(new MessageResponse(404, "Vehicule has already a contract"));
 
+
             //search for owner by id
-            Optional<Client> owner = clientRepository.findById(addNewContractRequest.getClientId());
+            String id = authService.getIdFromToken(token);
+            Optional<Client> owner = clientRepository.findById(id);
 
             if (!owner.isPresent())
                 return ResponseEntity.badRequest().body(new MessageResponse(401, "Client not found"));
@@ -87,8 +110,14 @@ public class VehiculeController {
     }
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<Vehicule>> getAllVehicules() {
+    public ResponseEntity<Object> getAllVehicules(@RequestHeader("Authorization") String authorizationHeader) {
         try {
+            // Extract the token from the Authorization header
+            String token = extractTokenFromHeader(authorizationHeader);
+            if (!authService.isValidEmployeeToken(token) && !authService.isValidExaminaterToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(401, "Not authorized"));
+            }
+
             List<Vehicule> vehicules = vehiculeRepository.findAll();
 
             return ResponseEntity.ok(vehicules);
@@ -98,9 +127,15 @@ public class VehiculeController {
     }
 
     @GetMapping("/{vehiculeId}")
-    public ResponseEntity<VehiculeWithClientAndContract> getVehiculeWithClientById(@PathVariable String vehiculeId) {
+    public ResponseEntity<Object> getVehiculeWithClientById(@PathVariable String vehiculeId,@RequestHeader("Authorization") String authorizationHeader) {
         try {
-            VehiculeWithClientAndContract vehiculeWithClient = vehiculeRepository.findVehiculeWithClientAndContract(vehiculeId);
+            // Extract the token from the Authorization header
+            String token = extractTokenFromHeader(authorizationHeader);
+            if (!authService.isValidEmployeeToken(token) && !authService.isValidExaminaterToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(401, "Not authorized"));
+            }
+
+            Vehicule vehiculeWithClient = vehiculeRepository.findVehiculeWithClientAndContract(vehiculeId);
 
             if (vehiculeWithClient != null) {
                 return ResponseEntity.ok(vehiculeWithClient);
@@ -109,6 +144,33 @@ public class VehiculeController {
             }
         } catch (Exception e) {
             return ResponseEntity.status(500).build(); // Internal server error
+        }
+    }
+
+    @GetMapping("/getMyContracts")
+    public ResponseEntity<Object> getMyVehicules(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+
+            // Extract the token from the Authorization header
+            String token = extractTokenFromHeader(authorizationHeader);
+            if (!authService.isValidClientToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(401, "Not authorized"));
+            }
+
+            String id = authService.getIdFromToken(token);
+
+            Optional<Client> clientOptional = clientRepository.findById(id);
+
+
+            List<Vehicule> vehiculeWithContract = vehiculeRepository.findAllByOwner(clientOptional.get());
+
+            if (vehiculeWithContract != null) {
+                return ResponseEntity.ok(vehiculeWithContract);
+            } else {
+                return ResponseEntity.status(404).build(); // Resource not found
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build(); // Erreur interne du serveur
         }
     }
 
