@@ -27,6 +27,12 @@ public class Vehicule {
     private double price;
     private String grey_card_number;
     private String model;
+    private String marque; // New feature
+    private String puissanceFiscale; // New feature
+    private String carburant; // New feature
+    private int annee; // New feature
+    private String boiteDeVitesses; // New feature
+    private String etatDeVehicule; // New feature
 
     @JsonManagedReference
     @ManyToOne
@@ -41,22 +47,35 @@ public class Vehicule {
     @DBRef
     private Contract contract;
 
-    public Vehicule(String type, String matricule, double price, String greyCardNumber, String model, Client owner) {
+    public Vehicule(String type, String matricule, double price, String greyCardNumber, String model, String marque, String puissanceFiscale, String carburant, int annee, String boiteDeVitesses, String etatDeVehicule, Client owner) {
         this.type = type;
         this.matricule = matricule;
         this.price = price;
         this.grey_card_number = greyCardNumber;
         this.model = model;
+        this.marque = marque;
+        this.puissanceFiscale = puissanceFiscale;
+        this.carburant = carburant;
+        this.annee = annee;
+        this.boiteDeVitesses = boiteDeVitesses;
+        this.etatDeVehicule = etatDeVehicule;
         this.owner = owner;
     }
 
-    public Vehicule(String type, String matricule, double price, String greyCardNumber, String model, Client owner, Contract contract) {
+    public Vehicule(String type, String matricule, double price, String greyCardNumber, String model, String marque, String puissanceFiscale, String carburant, int annee, String boiteDeVitesses, String etatDeVehicule, Client owner, Contract contract) {
         this.type = type;
         this.matricule = matricule;
         this.price = price;
         this.grey_card_number = greyCardNumber;
         this.model = model;
+        this.marque = marque;
+        this.puissanceFiscale = puissanceFiscale;
+        this.carburant = carburant;
+        this.annee = annee;
+        this.boiteDeVitesses = boiteDeVitesses;
+        this.etatDeVehicule = etatDeVehicule;
         this.owner = owner;
         this.contract = contract;
     }
+
 }

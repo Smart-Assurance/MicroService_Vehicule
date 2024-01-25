@@ -77,7 +77,21 @@ public class VehiculeController {
             if (!contract.isPresent())
                 return ResponseEntity.badRequest().body(new MessageResponse(401, "Contract not found"));
             targetContract=contract.get();
-            Vehicule vehicule = new Vehicule(addNewContractRequest.getType(), addNewContractRequest.getMatricule(), addNewContractRequest.getPrice(), addNewContractRequest.getGrey_card_number(), addNewContractRequest.getModel(), owner.get(), contract.get());
+            Vehicule vehicule = new Vehicule(
+                    addNewContractRequest.getType(),
+                    addNewContractRequest.getMatricule(),
+                    addNewContractRequest.getPrice(),
+                    addNewContractRequest.getGrey_card_number(),
+                    addNewContractRequest.getModel(),
+                    addNewContractRequest.getMarque(),
+                    addNewContractRequest.getPuissanceFiscale(),
+                    addNewContractRequest.getCarburant(),
+                    addNewContractRequest.getAnnee(),
+                    addNewContractRequest.getBoiteDeVitesses(),
+                    addNewContractRequest.getEtatDeVehicule(),
+                    owner.get(),
+                    contract.get()
+            );
 
             vehiculeRepository.save(vehicule);
              Vehicule savedVehicule = vehiculeRepository.save(vehicule);
@@ -172,6 +186,16 @@ public class VehiculeController {
         } catch (Exception e) {
             return ResponseEntity.status(500).build(); // Erreur interne du serveur
         }
+    }
+
+
+    @Autowired
+    KafkaSender kafkaSender;
+
+    @PostMapping(value = "/producer")
+    public String producer(@RequestParam("key") String key, @RequestBody String message) {
+        kafkaSender.send(key, message);
+        return "Message sent to the Kafka Topic Successfully";
     }
 
 }

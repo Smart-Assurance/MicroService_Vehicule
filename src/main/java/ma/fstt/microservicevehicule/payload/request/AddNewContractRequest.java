@@ -11,12 +11,11 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.Date;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
-
 public class AddNewContractRequest {
     @NotBlank
     private String type;
@@ -28,6 +27,17 @@ public class AddNewContractRequest {
     private String grey_card_number;
     @NotBlank
     private String model;
+    @NotBlank
+    private String marque;
+    @NotBlank
+    private String puissanceFiscale;
+    @NotBlank
+    private String carburant;
+    private int annee;
+    @NotBlank
+    private String boiteDeVitesses;
+    @NotBlank
+    private String etatDeVehicule;
     @NotBlank
     private String contractId;
 }

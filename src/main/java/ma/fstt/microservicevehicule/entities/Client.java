@@ -38,6 +38,8 @@ public class Client extends User {
     @NotBlank
     private Date date_of_birth;
 
+    private String recommandedContract;
+
 
     @JsonIgnore
     @OneToMany(mappedBy = "owner")
